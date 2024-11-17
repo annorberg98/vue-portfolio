@@ -43,6 +43,7 @@ interface Certification {
   title: string;
   image: string; // Path to certification logo/image
   issued: Date; // Date object for when the certification was issued
+  difficulty: number;
   renewed?: Date; // Optional Date object for when the certification was renewed
   credentialLink?: string; // Optional link to verification page
 }
@@ -75,6 +76,7 @@ export default defineComponent({
           title: 'SC-900: Microsoft Security, Compliance, and Identity Fundamentals',
           image: sc900Logo,
           issued: new Date('2024-08-07'),
+          renewed: new Date('2024-11-17'),
           difficulty: 3,
           credentialLink: 'https://learn.microsoft.com/api/credentials/share/en-us/NorbergAnton-3184/361BADA7639DAF0E?sharingId=475FA9AFD74F59E'
         },

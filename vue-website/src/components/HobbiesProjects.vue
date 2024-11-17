@@ -10,13 +10,21 @@
       <p>Error fetching GitHub data: {{ error }}</p>
     </div>
 
-    <div v-if="projects.length > 0" class="project-list">
-      <div class="project" v-for="(project, index) in projects" :key="index">
-        <h3>{{ project.name }}</h3>
-        <p>{{ project.description }}</p>
-        <a :href="project.html_url" target="_blank">View on GitHub</a>
+    <div v-else class="project-list">
+      <div v-for="(project, index) in projects" :key="index" class="project">
+        <div class="project-header">
+          <h3>
+            <a :href="project.html_url" target="_blank" rel="noopener noreferrer">{{ project.name }}</a>
+          </h3>
+          <p v-if="project.last_commit_date" class="last-commit">
+            Last Commit: {{ new Date(project.last_commit_date).toLocaleDateString() }}
+          </p>
+        </div>
+        <p>{{ project.description || 'No description available.' }}</p>
+        <a :href="project.html_url" target="_blank" rel="noopener noreferrer">View Repository</a>
       </div>
     </div>
+
   </section>
 </template>
 
@@ -28,6 +36,7 @@ interface Project {
   name: string;
   description: string;
   html_url: string;
+  last_commit_date: string | null;
 }
 
 export default defineComponent({
@@ -66,37 +75,43 @@ export default defineComponent({
       }
 
       try {
-        // Simulate a random delay before fetching the projects
         const delay = this.generateRandomDelay();
         console.log(`Waiting for ${delay} seconds before making the request...`);
-        await new Promise(resolve => setTimeout(resolve, delay * 1000)); // Convert to ms
+        await new Promise((resolve) => setTimeout(resolve, delay * 1000));
 
-        // Fetch each repo individually using Promise.allSettled
-        const projectPromises = this.selectedRepos.map((repoName) =>
-          axios.get(`https://api.github.com/repos/${githubUsername}/${repoName}`)
-            .then(response => ({
-              name: response.data.name,
-              description: response.data.description,
-              html_url: response.data.html_url,
-            }))
-            .catch((err) => {
-              console.error(`Error fetching ${repoName}:`, err);
-              return null; // Return null for failed requests
-            })
-        );
+        const projectPromises = this.selectedRepos.map(async (repoName) => {
+          try {
+            const repoResponse = await axios.get(`https://api.github.com/repos/${githubUsername}/${repoName}`, {
+              //headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
 
-        // Wait for all promises to settle
+            // Fetch the latest commit for the repository
+            const commitsResponse = await axios.get(
+              `https://api.github.com/repos/${githubUsername}/${repoName}/commits?per_page=1`,
+              //{ headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            );
+
+            return {
+              name: repoResponse.data.name,
+              description: repoResponse.data.description,
+              html_url: repoResponse.data.html_url,
+              last_commit_date: commitsResponse.data[0]?.commit.committer.date || null,
+            };
+          } catch (err) {
+            console.error(`Error fetching data for ${repoName}:`, err);
+            return null;
+          }
+        });
+
         const results = await Promise.allSettled(projectPromises);
 
-        // Filter out failed requests (null values)
         this.projects = results
-          .filter(result => result.status === 'fulfilled' && result.value !== null)
+          .filter((result) => result.status === 'fulfilled' && result.value !== null)
           .map((result: any) => result.value);
 
         if (this.projects.length === 0) {
           this.error = 'No projects could be fetched';
         } else {
-          // Store the fetched projects and selected repos in localStorage
           localStorage.setItem('projects', JSON.stringify(this.projects));
           localStorage.setItem('selectedRepos', JSON.stringify(this.selectedRepos));
           console.log('Projects stored in localStorage.');
@@ -104,7 +119,7 @@ export default defineComponent({
 
         this.loading = false;
       } catch (err) {
-        console.error("Error fetching projects:", err);
+        console.error('Error fetching projects:', err);
         this.error = 'Failed to fetch data from GitHub';
         this.loading = false;
       }
@@ -154,17 +169,18 @@ export default defineComponent({
   padding: 20px;
   width: 100%;
   max-width: 900px;
-  margin: auto;
+  margin: 20px auto;
   background-color: #282c34;
   color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
 h2 {
   text-align: center;
   font-size: 28px;
   color: #f9f9f9;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .loading,
@@ -185,7 +201,8 @@ h2 {
   background-color: #383c44;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .project:hover {
@@ -193,11 +210,27 @@ h2 {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap; /* Ensures proper layout on smaller screens */
+}
+
 .project h3 {
   font-size: 22px;
   color: #ffcc00;
-  margin-bottom: 10px;
-  text-align: center;
+  margin: 0;
+}
+
+.project h3 a {
+  color: #61dafb;
+  text-decoration: none;
+}
+
+.project h3 a:hover {
+  text-decoration: underline;
 }
 
 .project p {
@@ -208,15 +241,27 @@ h2 {
 
 .project a {
   font-size: 18px;
-  color: #ffcc00;
+  color: #61dafb;
   text-decoration: none;
-  text-align: center;
   display: block;
   margin-top: 10px;
+  text-align: center;
 }
 
 .project a:hover {
   text-decoration: underline;
+}
+
+.last-commit {
+  font-size: 14px;
+  color: #bbb;
+  margin-left: auto; /* Pushes it to the right in the flex container */
+  opacity: 0.5;
+}
+
+.error p {
+  font-size: 20px;
+  color: red;
 }
 
 .loading p {
@@ -224,8 +269,4 @@ h2 {
   color: #007BFF;
 }
 
-.error p {
-  font-size: 20px;
-  color: red;
-}
 </style>

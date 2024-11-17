@@ -8,16 +8,17 @@
       <div class="job-header">
         <div class="job-info">
           <h3>{{ job.company }}</h3>
-          <p class="duration">{{ job.duration }}</p>
-          <p class="location">{{ job.location }}</p>
-          <p class="work-type">{{ job.workType }}</p>
+          <p class="dates">
+            {{ job.start_date.toLocaleDateString() }} -
+            {{ job.end_date ? job.end_date.toLocaleDateString() : "Present" }}
+          </p>
+          <p class="duration">Duration: {{ calculateDuration(job.start_date, job.end_date) }}</p>
         </div>
       </div>
 
       <!-- Main Role -->
       <div class="main-role">
         <h4>{{ job.mainRole }}</h4>
-        <p class="main-role-duration">{{ job.mainRoleDuration }}</p>
         <p class="main-role-description">{{ job.mainRoleDescription }}</p>
       </div>
 
@@ -26,7 +27,11 @@
         <h4>Assignments:</h4>
         <div v-for="(assignment, idx) in job.assignments" :key="idx" class="assignment">
           <h5>{{ assignment.role }}</h5>
-          <p class="assignment-duration">{{ assignment.duration }}</p>
+          <p class="dates">
+            {{ assignment.start_date.toLocaleDateString() }} -
+            {{ assignment.end_date ? assignment.end_date.toLocaleDateString() : "Present" }}
+          </p>
+          <p class="duration">Duration: {{ calculateDuration(assignment.start_date, job.end_date) }}</p>
           <p class="assignment-description">{{ assignment.description }}</p>
         </div>
       </div>
@@ -39,50 +44,67 @@ import { defineComponent } from 'vue';
 
 interface Assignment {
   role: string;
-  duration: string;
+  //duration: string;
+  start_date: Date;
+  end_date: Date | null;
   description: string;
   skills: string;
 }
 
 interface Job {
   company: string;
-  duration: string;
-  location: string;
-  workType: string;
+  //duration: string;
+  start_date: Date;
+  end_date: Date | null;
   mainRole: string;
   mainRoleDuration: string;
   mainRoleDescription: string;
-  mainRoleSkills: string;
+  //mainRoleSkills: string;
   assignments?: Assignment[]; // Optional assignments for each job
 }
 
 export default defineComponent({
+  methods: {
+    calculateDuration(start_date: Date, end_date: Date | null): string {
+      const end = end_date || new Date(); //Use current date if end_Date is null
+      const diff = end.getTime() - start_date.getTime();
+      
+      const totalMonths = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44)); // Approximation
+      const years = Math.floor(totalMonths / 12);
+      const months = totalMonths % 12;
+
+      let duration = "";
+      if (years > 0) duration += `${years} year${years > 1 ? "s" : ""}`;
+      if (months > 0) duration += `${years > 0 ? " and " : ""}${months} month${months > 1 ? "s" : ""}`;
+      return duration;
+    },
+  },
   data() {
     return {
       workExperience: [
         // Current Employment at Sogeti
         {
           company: "Sogeti",
-          duration: "Nov 2022 - Present · 2 yrs 1 mo",
-          location: "Malmo, Skåne County, Sweden",
-          workType: "Full-time · Hybrid",
+          start_date: new Date('2022-11-01'),
           mainRole: "Software Engineer",
           mainRoleDuration: "Nov 2022 - Present",
           mainRoleDescription: "Software Engineering Consultant with focus on Integration and Automation.",
           assignments: [
             {
               role: "Integration Specialist",
-              duration: "Apr 2024 - Present · 8 mos",
+              start_date: new Date('2024-04-02'),
               description: "Consulting assignment as an IT specialist in Integration, Automation, Data, and Development platforms, where I serve as Product Owner (PO) and Solution Architect. I oversee, develop, and maintain these platforms, ensuring seamless integration, automation, and efficient operation across all domains.",
             },
             {
               role: "Azure Integration Engineer",
-              duration: "Feb 2024 - Apr 2024 · 3 mos",
+              start_date: new Date('2024-02-01'),
+              end_date: new Date('2024-04-04'),
               description: "Consulting Assignment as Integration Engineer. In this role, I contributed to designing and implementing integrations between the client’s HR system and Dynamics 365. My responsibilities included setting up infrastructure in Azure using Terraform, developing integrations with cloud-native resources and .NET, and configuring a CI/CD pipeline using Azure DevOps.",
             },
             {
               role: "BizTalk Developer",
-              duration: "Nov 2022 - Nov 2023 · 1 yr 1 mo",
+              start_date: new Date('2022-11-01'),
+              end_date: new Date('2023-11-31'),
               description: "Consulting engagement as a BizTalk Developer, responsible for designing and implementing integrations between internal systems, external suppliers, and government agencies.",
             },
           ],
@@ -91,16 +113,16 @@ export default defineComponent({
         // Previous Employment at Sprinta
         {
           company: "Sprinta",
-          duration: "Oct 2020 - Nov 2022 · 2 yrs 2 mos",
-          location: "Malmö, Skåne, Sverige",
-          workType: "Full-time",
+          start_date: new Date('2020-10-04'),
+          end_date: new Date('2022-10-31'),
           mainRole: "Software Developer",
           mainRoleDuration: "Oct 2020 - Nov 2022",
           mainRoleDescription: "Software Developer, contributing to development projects and integrating various systems.",
           assignments: [
             {
               role: "BizTalk Developer",
-              duration: "Feb 2021 - Nov 2022 · 1 yr 10 mos",
+              start_date: new Date('2021-02-10'),
+              end_date: new Date('2022-10-31'),
               description: "Designed and implemented integrations with Microsoft BizTalk Server and other systems.",
             },
           ],
@@ -112,16 +134,19 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* Container for work experience section */
 .work-experience {
   padding: 20px;
   width: 100%; /* Full width */
-  max-width: 900px;
+  max-width: 900px; /* Limit max width */
   margin: auto;
   background-color: #282c34; /* Dark background */
   color: white; /* White text */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  /*border-radius: 8px; */
 }
 
+/* Section heading */
 h2 {
   text-align: center;
   font-size: 28px;
@@ -129,23 +154,35 @@ h2 {
   margin-bottom: 20px;
 }
 
+/* Individual job container */
 .job {
   padding: 15px;
   background-color: #3a3f47; /* Darker background for each job entry */
   border-radius: 8px;
   margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Slight shadow for jobs */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.job:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Job header section with logo and details */
 .job-header {
   display: flex;
   align-items: center;
   gap: 15px;
+  margin-bottom: 10px;
 }
 
 .company-logo {
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: 50%; /* Circular logo */
+  object-fit: cover; /* Ensure image fits nicely */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for logo */
 }
 
 .job-info {
@@ -153,22 +190,27 @@ h2 {
   flex-direction: column;
 }
 
+/* Job title styling */
 h3 {
   font-size: 22px;
   color: #ffcc00; /* Yellow for job title */
-  margin-bottom: 5px;
+  margin: 0;
 }
 
+/* Additional job details */
 .duration,
 .location,
 .work-type {
   font-size: 16px;
   color: #f1f1f1;
+  margin: 3px 0; /* Small spacing between details */
 }
 
+/* Main role styling */
 .main-role h4 {
   font-size: 20px;
-  color: #ffcc00;
+  color: #ffcc00; /* Yellow for role title */
+  margin: 10px 0;
 }
 
 .main-role-duration,
@@ -176,27 +218,42 @@ h3 {
 .main-role-skills {
   font-size: 16px;
   color: #f1f1f1;
+  margin: 5px 0; /* Add spacing between paragraphs */
 }
 
+/* Assignments section styling */
 .assignments {
   margin-top: 20px;
   background-color: #444c56; /* Darker background for assignments section */
   padding: 15px;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for assignment container */
 }
 
+/* Assignment heading */
 .assignments h4 {
   font-size: 20px;
-  color: #ffcc00;
+  color: #ffcc00; /* Yellow for assignment heading */
+  margin-bottom: 10px;
 }
 
+/* Individual assignment styling */
 .assignment {
   margin-bottom: 15px;
+  padding: 10px;
+  background-color: #3a3f47; /* Slightly darker background for assignments */
+  border-radius: 8px;
 }
 
+.assignment:hover {
+  background-color: #4b535d; /* Slight hover effect for assignments */
+}
+
+/* Assignment details */
 .assignment h5 {
   font-size: 18px;
-  color: #ffcc00;
+  color: #ffcc00; /* Yellow for assignment title */
+  margin: 5px 0;
 }
 
 .assignment-duration,
@@ -204,5 +261,18 @@ h3 {
 .assignment-skills {
   font-size: 16px;
   color: #f1f1f1;
+  margin: 3px 0; /* Small spacing for readability */
+}
+
+/* General responsiveness */
+@media (max-width: 768px) {
+  .job-header {
+    flex-direction: column; /* Stack items on smaller screens */
+    align-items: flex-start;
+  }
+
+  .company-logo {
+    margin-bottom: 10px; /* Add spacing for stacked layout */
+  }
 }
 </style>

@@ -3,10 +3,8 @@
   <div id="app">
     <Intro />
     <WorkExperience />
-    <div class="education-skills-container">
-      <Education />
-      <Skills />
-    </div>
+    <Education />
+    <Skills />
     <Certifications />
     <HobbiesProjects />
   </div>
@@ -40,22 +38,5 @@ export default defineComponent({
   align-items: center;
   /*padding: 20px;*/
   background-color: #f5f5f5;
-}
-
-.education-skills-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 900px;
-  margin: 0;
-  gap: 0;
-}
-
-@media (min-width: 768px) {
-  .education-skills-container {
-    flex-direction: row;
-    justify-content: space-between;
-  }
 }
 </style>
