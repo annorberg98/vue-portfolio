@@ -69,6 +69,7 @@ export default defineComponent({
           title: 'AZ-204: Developing Solutions for Microsoft Azure',
           image: az204Logo, // Use the imported logo
           issued: new Date('2024-02-28'),
+          renewed: new Date('2024-12-01'),
           difficulty: 2,
           credentialLink: 'https://learn.microsoft.com/api/credentials/share/en-us/NorbergAnton-3184/44C27608E2280283?sharingId=475FA9AFD74F59E'
         },
@@ -76,7 +77,6 @@ export default defineComponent({
           title: 'SC-900: Microsoft Security, Compliance, and Identity Fundamentals',
           image: sc900Logo,
           issued: new Date('2024-08-07'),
-          renewed: new Date('2024-11-17'),
           difficulty: 3,
           credentialLink: 'https://learn.microsoft.com/api/credentials/share/en-us/NorbergAnton-3184/361BADA7639DAF0E?sharingId=475FA9AFD74F59E'
         },
